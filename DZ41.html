@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DnD_Game</title>
+    <script src="jquery-3.6.0.min.js"></script>
+    <script src="jquery-ui.min.js"></script>
+    <style>
+        body {
+            background-color: #1b7d62;
+            font-family: "Calibri", sans-serif;
+        }
+        * {
+            box-sizing: border-box;
+        }
+        .content {
+            margin: 50px auto;
+            min-width: 880px;
+        }
+        h1 {
+            text-align: center;
+            font-size: 60px;
+            color: white;
+            text-shadow: 0 0 5px red;
+        }
+        .cardPile {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            width: 89%;
+            min-height: 200px;
+            margin: 60px auto;
+        }
+
+        .cardSlots {
+            display: flex;
+            flex-wrap: wrap;
+            width: 85%;
+            min-height: 210px;
+            margin: 60px auto;
+            border: 2px solid white;
+            font-family: "Calibri", sans-serif;
+            font-size: 50px;
+            color: white;
+        }
+
+        .cardSlots div {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 10%;
+            user-select: none;
+            border: 2px solid white;
+            background-color: #096f57;
+            font-family: "Calibri", sans-serif;
+        }
+
+        .cardSlots span {
+            border-top: 3px solid white;
+            border-bottom: 3px solid white;
+            line-height: 35px;
+            padding: 0 3px;
+        }
+
+        .cardPile div::after {
+            position: absolute;
+            margin: 0 auto;
+            content: '';
+            display: block;
+            width: 70%;
+            height: 80%;
+            border: 4px solid #acf49194;
+            border-radius: 10px;
+            background-color: #ff06061a;
+        }
+
+        .cardPile div {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            border: 1px solid red;
+            background: radial-gradient(white, #FFCE10DB);
+            color: orangered;
+            font-size: 4em;
+            font-weight: bold;
+            text-shadow: 0 0 15px yellow;
+            border-radius: 10px;
+            flex-basis: 9%;
+        }
+
+        .success {
+            background: #90f259 !important;
+        }
+
+        .ui-draggable-dragging {
+            box-shadow: 20px 30px 40px black !important;
+        }
+
+        .winModal {
+            display: none;
+            text-align: center;
+            width: 50%;
+            position: fixed;
+            left: 25%;
+            top: 20%;
+            background-color: lightgreen;
+            padding: 30px 0;
+            border: 10px solid white;
+            border-radius: 20%;
+            box-shadow: 0 0 20px black;
+        }
+
+        .winModal h2 {
+            margin: 0;
+            font-size: 60px;
+            color: orange;
+            text-shadow: 0 0 5px #392009;
+        }
+
+        .winModal .pic {
+            display: block;
+            margin: 50px auto;
+            max-width: 80%;
+        }
+
+        .winModal button {
+            font-size: 25px;
+        }
+    </style>
+</head>
+<body>
+    <div id="content" class="content">
+        <h1>Домашняя работа №41</h1>
+        <div id="cardPile" class="cardPile">
+
+        </div>
+        <div id="cardSlots" class="cardSlots">
+
+        </div>
+    </div>
+
+    <div id="winModal" class="winModal">
+        <h2>Победа!</h2>
+        <img src="images/win.png" alt="pic" class="pic">
+        <button onclick="document.location.reload()">Сыграть ещё раз</button>
+    </div>
+
+    <script>
+        $(function() {
+            const numbers = [1,2,3,4,5,6,7,8,9,10];
+            //const words = ["один","два","три","четыре","пять","шесть","семь","восемь","девять","десять"];
+            const words = ["I","II","III","IV","V","VI","VII","VIII","IX","X"];
+            let correctCards = 0;
+            let mistakes = 3;
+
+            // перетасуем числа случайным образом
+            numbers.sort(() => Math.random() - 0.5);
+
+            // Заполнение cardPile - верхнего блока с карточками
+            for (let i = 0; i < numbers.length; i++) {
+                $(`<div><span>${numbers[i]}</span></div>`).data('number',numbers[i]).appendTo('#cardPile').draggable({
+                    containment: "#content",
+                    revert: true,
+                    cursor: 'move',
+                });
+            }
+
+            // исчезновение элементов через 4
+            $('#cardPile > div > span').delay(4000).fadeOut(1000);
+
+            // Заполнение cardSlots
+            for (let j = 0; j < words.length;) {
+                $(`<div><span>${words[j]}</span></div>`).data('number',++j).appendTo('#cardSlots').droppable({
+                    accept: '#cardPile div',
+                    drop: handleCardDrop
+                });
+            }
+
+/*            function tmp() {
+                $('#winModal').fadeOut(2000);
+                //document.getElementById("winModal").style.display="none";
+            }*/
+
+            function handleCardDrop(event, ui) {
+                // слот для карточки с записью номера слота
+                let slotNumber = $(this).data('number');
+                let cardNumber = ui.draggable.data('number');
+                console.log(`${cardNumber} в ${slotNumber}`);
+                if (cardNumber === slotNumber) {
+                    ui.draggable.draggable('disable'); // отключение возможности перемещения
+                    ui.draggable.draggable('option', 'revert', 'false');
+
+                    ui.draggable.position({
+                        my: "center center",
+                        at: "center center",
+                        of: $(this)
+                    })
+
+                    ui.draggable.addClass("success");
+                    $('.success span').fadeIn(1500);
+
+                    ++correctCards === 10 && $('#winModal').fadeIn(1500);
+                    $('#winModal h2').html('Победа!');
+                    $('#winModal img').attr('src','images/win.png');
+                   // setTimeout(tmp, 10000);
+                } else {
+                    --mistakes === 0 && $('#winModal').fadeIn(1500);
+                    $('#winModal h2').html('Looser!');
+                    $('#winModal img').attr('src','images/loose.png');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
